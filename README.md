@@ -211,6 +211,13 @@ Overlapping built-in pi tools (`read`, `bash`, `write`, `edit`, `grep`, `find`, 
 
 Cursor-native tool replay is separate from the bridge. Replay cards are display-only recorded Cursor SDK activity. They never re-run Cursor-side commands, reapply Cursor edits, call MCP servers, or mutate pi state. See [Cursor native tool replay](docs/cursor-native-tool-replay.md).
 
+Cursor models often emit ` ```mermaid ` blocks, but pi's TUI renders them as plain code fences. This extension converts Cursor assistant ` ```mermaid ` blocks at `message_end` (on by default):
+
+1. **Terminal image** when the terminal supports inline images (Kitty/Ghostty/WezTerm/iTerm2) and headless Chrome can render the diagram locally (no npm dependency added).
+2. **Text outline fallback** when image rendering is unavailable or disabled.
+
+If you use another mermaid rendering extension, disable this one with `PI_CURSOR_MERMAID_PREVIEW=0`. For text-only mode, set `PI_CURSOR_MERMAID_IMAGE=0`.
+
 Bridge controls:
 
 ```bash
@@ -226,7 +233,21 @@ PI_CURSOR_MCP_TOOL_TIMEOUT_MS=7200000 pi --model cursor/composer-2.5
 
 # Emit scrubbed bridge diagnostics as JSONL to stderr with prefix [pi-cursor-sdk:bridge].
 PI_CURSOR_PI_TOOL_BRIDGE_DEBUG=1 pi --model cursor/composer-2.5
+
+# Disable Cursor mermaid text preview when another mermaid rendering extension is installed.
+PI_CURSOR_MERMAID_PREVIEW=0 pi --model cursor/composer-2.5
+
+# Text outline only; skip headless Chrome diagram rendering.
+PI_CURSOR_MERMAID_IMAGE=0 pi --model cursor/composer-2.5
+
+# Optional Chrome/Chromium path override for local mermaid PNG rendering.
+PI_CURSOR_MERMAID_CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" pi --model cursor/composer-2.5
+
+# Emit mermaid preview diagnostics as JSONL to stderr with prefix [pi-cursor-sdk:mermaid].
+PI_CURSOR_MERMAID_PREVIEW_DEBUG=1 pi --model cursor/composer-2.5
 ```
+
+After changing this extension's source, run `/reload` in pi (or restart pi) so the updated handlers load. Session reload alone does not re-run extension code; `session_start` backfill rewrites already-loaded Cursor assistant messages for display when the handler is active. Visual mermaid rendering uses a temporary headless Chrome page with Mermaid loaded from jsDelivr; it requires local Chrome/Chromium and network access for the CDN script on first render.
 
 `PI_CURSOR_PI_TOOL_BRIDGE=0` is the supported rollback flag and disables the bridge entirely. The bridge also treats `false`, `off`, `none`, `no`, and `disabled` as off; `1`, `true`, `on`, `yes`, and `enabled` as on. `PI_CURSOR_EXPOSE_BUILTIN_TOOLS=1` opts in to exposing overlapping pi tool names that Cursor already has native equivalents for. The Cursor MCP timeout override defaults to 3600 seconds because the installed Cursor SDK has a 60-second MCP request default that is too short for some local MCP tools, including bridged pi tools and configured Cursor MCP servers. `PI_CURSOR_PI_TOOL_BRIDGE_DEBUG=1` is off by default and emits typed, allowlisted, scrubbed single-line JSONL records to `process.stderr`. These records are operational diagnostics, not anonymous telemetry: they intentionally include tool names, safe correlation IDs, bridge run state, exposed pi↔MCP name pairs, queued requests, result resolution, rejection, cancellation, and pending counts. They must not include endpoint URLs, endpoint path components, endpoint tokens, raw args/results, stdout/stderr payloads, file contents, Cursor settings output, API keys, bearer tokens, cookies, session credentials, or secrets. Do not enable or share bridge debug logs where tool names themselves are sensitive.
 
