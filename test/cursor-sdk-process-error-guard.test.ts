@@ -225,7 +225,7 @@ describe("Cursor SDK process error guard", () => {
 		}
 	});
 
-	it("does not suppress non-Cursor network ConnectErrors", () => {
+	it("suppresses generic connect-node network ConnectErrors while a provider turn is active", () => {
 		const suppression = installCursorSdkProcessErrorGuard();
 		let listenerCalled = false;
 		const listener = () => {
@@ -235,7 +235,7 @@ describe("Cursor SDK process error guard", () => {
 		try {
 			const emitted = process.emit("uncaughtException", makeNonCursorNetworkConnectError(), "uncaughtException");
 			expect(emitted).toBe(true);
-			expect(listenerCalled).toBe(true);
+			expect(listenerCalled).toBe(false);
 		} finally {
 			process.removeListener("uncaughtException", listener);
 			suppression.dispose();

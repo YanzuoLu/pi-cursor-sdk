@@ -35,7 +35,7 @@ function shouldSuppressProcessError(event: string | symbol, args: readonly unkno
 	const classification = classifyCursorConnectError(error);
 	if (!classification) return false;
 	if (classification.kind === "abort") return hasActiveAbortSuppression();
-	return activeProviderTurns.size > 0 && isCursorProvenance(classification.source);
+	return activeProviderTurns.size > 0 && (classification.kind === "network" || isCursorProvenance(classification.source));
 }
 
 function installProcessEmitPatch(): void {
