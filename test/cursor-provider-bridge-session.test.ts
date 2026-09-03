@@ -156,9 +156,8 @@ describe("streamCursor session agent", () => {
 		expect(mockSend).toHaveBeenCalledTimes(2);
 		const firstPrompt = mockSend.mock.calls[0]?.[0] as { text?: string };
 		const secondPrompt = mockSend.mock.calls[1]?.[0] as { text?: string };
-		expect(firstPrompt.text).toContain("Cursor SDK tool boundary:");
+		expect(firstPrompt.text).not.toContain("Cursor SDK tool boundary:");
 		expect(firstPrompt.text).toContain("User: Hello");
-		expect(firstPrompt.text).toContain("Tools: call available tools directly by their declared name");
 		expect(secondPrompt.text).toContain("User: Follow up");
 		expect(secondPrompt.text).not.toContain("User: Hello");
 	});
@@ -249,7 +248,7 @@ describe("streamCursor session agent", () => {
 		expect(mockedCreate).toHaveBeenCalledTimes(2);
 		expect(mockDispose).toHaveBeenCalledTimes(1);
 		const secondPrompt = mockSend.mock.calls[1]?.[0] as { text?: string };
-		expect(secondPrompt.text).toContain("Cursor SDK tool boundary:");
+		expect(secondPrompt.text).not.toContain("Cursor SDK tool boundary:");
 		expect(secondPrompt.text).toContain("User: Hello edited");
 	});
 
@@ -296,7 +295,7 @@ describe("streamCursor session agent", () => {
 		expect(mockedCreate).toHaveBeenCalledTimes(2);
 		expect(mockDispose).toHaveBeenCalledTimes(1);
 		const thirdPrompt = mockSend.mock.calls[2]?.[0] as { text?: string };
-		expect(thirdPrompt.text).toContain("Cursor SDK tool boundary:");
+		expect(thirdPrompt.text).not.toContain("Cursor SDK tool boundary:");
 		expect(thirdPrompt.text).toContain("User: Hello");
 	});
 
@@ -441,8 +440,8 @@ describe("streamCursor session agent", () => {
 		await collectEvents(streamCursor(makeModel(), makeContext(), { apiKey: "test-key" }));
 
 		const firstPrompt = mockSend.mock.calls[0]?.[0] as { text?: string };
-		expect(firstPrompt.text).toContain("Callable tool surfaces this run:");
-		expect(firstPrompt.text).toContain("Cursor host/MCP");
-		expect(firstPrompt.text).not.toContain("pi__cursor_ask_question");
+		expect(firstPrompt.text).not.toContain("Callable tool surfaces this run:");
+		expect(firstPrompt.text).not.toContain("Cursor host/MCP");
+		expect(firstPrompt.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: Hello");
 	});
 });

@@ -395,15 +395,7 @@ export function buildCursorIncrementalPrompt(context: Context, options: CursorPr
 }
 
 export function buildCursorPrompt(context: Context, options: CursorPromptOptions = {}): CursorPrompt {
-	const sectionsBeforeMessages: string[] = [getCursorToolBoundaryText({
-		agentMode: options.agentMode,
-		hasToolManifest: Boolean(options.toolManifest),
-		includePiBridgeGuidance: options.includePiBridgeGuidance,
-		includePiAskQuestionGuidance: options.includePiAskQuestionGuidance,
-	})];
-	if (options.toolManifest) {
-		sectionsBeforeMessages.push(options.toolManifest);
-	}
+	const sectionsBeforeMessages: string[] = [];
 
 	if (context.systemPrompt) {
 		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
@@ -416,7 +408,7 @@ export function buildCursorPrompt(context: Context, options: CursorPromptOptions
 			return text ? { index, text } : undefined;
 		})
 		.filter((section): section is { index: number; text: string } => section !== undefined);
-	const sectionsAfterMessages = getCursorBootstrapTailSections(options);
+	const sectionsAfterMessages: string[] = [];
 	const images = extractLatestImages(messages);
 	const imageTokenReserve = images.length * (options.imageTokenEstimate ?? 0);
 	const budgetOptions =

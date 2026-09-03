@@ -496,14 +496,9 @@ describe("streamCursor prompt and model config", () => {
 		}
 
 		const sentMessage = mockSend.mock.calls[0]?.[0] as { text: string };
-		expect(sentMessage.text).toContain("Cursor SDK tool boundary:");
-		expect(sentMessage.text).toContain("Call only Cursor SDK/MCP tools exposed in this run");
-		expect(sentMessage.text).toContain("Callable tool surfaces this run:");
-		expect(sentMessage.text).toContain("Cursor host/MCP");
-		expect(sentMessage.text).not.toContain("Bridged pi tools:");
-		expect(sentMessage.text).not.toContain("Pi bridge");
-		expect(sentMessage.text).not.toContain("Use pi__cursor_ask_question");
-		expect(sentMessage.text).not.toContain("prefer pi__mcp");
+		expect(sentMessage.text).not.toContain("Cursor SDK tool boundary:");
+		expect(sentMessage.text).not.toContain("Callable tool surfaces this run:");
+		expect(sentMessage.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: return code only");
 	});
 
 	it("keeps pi bridge prompt guidance when the actual bridge exposes tools even if context tools are empty", async () => {
@@ -537,11 +532,9 @@ describe("streamCursor prompt and model config", () => {
 		}
 
 		const sentMessage = mockSend.mock.calls[0]?.[0] as { text: string };
-		expect(sentMessage.text).toContain("For exposed pi bridge tools");
-		expect(sentMessage.text).not.toContain("Use pi__cursor_ask_question");
-		expect(sentMessage.text).toContain("Pi bridge: call exposed pi__* MCP names");
-		expect(sentMessage.text).toContain("Tools: call available tools directly by their declared name");
-		expect(sentMessage.text).toContain("sem_reindex");
+		expect(sentMessage.text).not.toContain("For exposed pi bridge tools");
+		expect(sentMessage.text).not.toContain("Pi bridge");
+		expect(sentMessage.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: use bridge if needed");
 	});
 
 	it("forwards latest user images to Cursor Agent.send", async () => {
@@ -651,7 +644,7 @@ describe("streamCursor prompt and model config", () => {
 				],
 			},
 		});
-		expect((mockSend.mock.calls[0]?.[0] as { text: string }).text).toContain("Cursor SDK mode is plan for this run");
+		expect((mockSend.mock.calls[0]?.[0] as { text: string }).text).toBe("System instructions from pi:\nBe helpful.\n\nUser: Hello");
 	});
 
 	it("passes the effective Cursor SDK mode on every send while reusing the agent", async () => {

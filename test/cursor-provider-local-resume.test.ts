@@ -103,7 +103,6 @@ describe("streamCursor local resume", () => {
 		const prompt = mockSend.mock.calls[0]?.[0] as { text?: string };
 		expect(prompt.text).toContain("User: Follow up");
 		expect(prompt.text).toContain("User: Hello");
-		expect(prompt.text).toContain("Tools: call available tools directly by their declared name");
 	});
 
 	it.each([

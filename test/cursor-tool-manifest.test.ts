@@ -76,14 +76,13 @@ describe("cursor-tool-manifest", () => {
 		expect(resolveCursorToolManifestEnabled({ [CURSOR_TOOL_MANIFEST_ENV]: "0" })).toBe(false);
 	});
 
-	it("includes manifest in bootstrap prompts when provided", () => {
+	it("omits manifest from bootstrap prompts to keep prompts pure", () => {
 		const manifest = buildCursorToolManifestText();
 		const prompt = buildCursorPrompt(
 			{ messages: [{ role: "user", content: "hi", timestamp: 1 }] },
 			{ toolManifest: manifest },
 		);
-		expect(prompt.text).toContain("Callable tool surfaces this run:");
-		expect(prompt.text).toContain("Cursor SDK tool boundary:");
-		expect(prompt.text).toContain("See callable surfaces below.");
+		expect(prompt.text).not.toContain("Callable tool surfaces this run:");
+		expect(prompt.text).toBe("User: hi");
 	});
 });

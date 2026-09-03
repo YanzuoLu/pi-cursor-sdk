@@ -40,10 +40,7 @@ import {
 import { inspectCursorCloudLocalState } from "./cursor-cloud-local-state.js";
 import { getCursorSessionName, getCursorSessionProjectTrusted } from "./cursor-session-scope.js";
 import { resolveCursorPiToolBridgeEnabled } from "./cursor-pi-tool-bridge-env.js";
-import {
-	buildCursorToolManifestText,
-	resolveCursorToolManifestEnabled,
-} from "./cursor-tool-manifest.js";
+import { resolveCursorToolManifestEnabled } from "./cursor-tool-manifest.js";
 import { isCursorNativeToolDisplayRuntimeEnabled } from "./cursor-native-tool-display-state.js";
 import {
 	createCursorCloudLifecyclePersistenceError,
@@ -293,23 +290,12 @@ async function prepareCursorLocalProviderTurn(
 
 		let bridgeToolNames = new Set(sessionAgentLease.bridgeRun?.snapshot.tools.map((tool) => tool.mcpToolName) ?? []);
 		let includePiBridgeGuidance = bridgeToolNames.size > 0;
-		const buildPromptOptions = (plan: ReturnType<typeof planCursorSessionSend>) => {
-			const promptOptions = {
+		const buildPromptOptions = (_plan: ReturnType<typeof planCursorSessionSend>) => {
+			return {
 				...getCursorPromptOptions(model),
 				agentMode,
 				includePiBridgeGuidance,
 				includePiAskQuestionGuidance: bridgeToolNames.has(`${CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX}cursor_ask_question`),
-			};
-			if (plan.mode !== "bootstrap" || !resolveCursorToolManifestEnabled()) {
-				return promptOptions;
-			}
-			return {
-				...promptOptions,
-				toolManifest: buildCursorToolManifestText({
-					bridgeSnapshot: sessionAgentLease.bridgeRun?.snapshot,
-					piBridgeEnabled: resolveCursorPiToolBridgeEnabled(),
-					includePiBridgeGuidance,
-				}),
 			};
 		};
 		let sendPlan = planCursorSessionSend(sessionAgentLease.sendState, context);
