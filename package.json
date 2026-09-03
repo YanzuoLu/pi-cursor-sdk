@@ -1,6 +1,6 @@
 {
   "name": "pi-cursor-sdk",
-  "version": "0.3.6",
+  "version": "0.3.6-fork.1",
   "description": "pi provider extension backed by @cursor/sdk local and cloud agents",
   "author": "Mitch Fultz (https://github.com/fitchmultz)",
   "license": "MIT",
@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fitchmultz/pi-cursor-sdk.git"
+    "url": "git+https://github.com/YanzuoLu/pi-cursor-sdk.git"
   },
   "bugs": {
     "url": "https://github.com/fitchmultz/pi-cursor-sdk/issues"

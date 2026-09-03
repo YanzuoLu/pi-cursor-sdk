@@ -28,6 +28,7 @@ import {
 	getEffectiveFastForModelId,
 } from "./cursor-state.js";
 import { resolveEffectiveCursorConfig } from "./cursor-runtime-state.js";
+import { CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX } from "./cursor-bridge-contract.js";
 import type { CursorResolvedSdkConfig } from "./cursor-config.js";
 import { buildCursorModelSelection } from "./model-discovery.js";
 import { getEffectiveCursorSettingSources } from "./cursor-setting-sources.js";
@@ -297,7 +298,7 @@ async function prepareCursorLocalProviderTurn(
 				...getCursorPromptOptions(model),
 				agentMode,
 				includePiBridgeGuidance,
-				includePiAskQuestionGuidance: bridgeToolNames.has("pi__cursor_ask_question"),
+				includePiAskQuestionGuidance: bridgeToolNames.has(`${CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX}cursor_ask_question`),
 			};
 			if (plan.mode !== "bootstrap" || !resolveCursorToolManifestEnabled()) {
 				return promptOptions;

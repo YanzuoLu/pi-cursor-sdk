@@ -8,9 +8,9 @@ describe("cursor bridge contract", () => {
 	it("keeps the full bridge contract available for tests and exports", () => {
 		const text = getCursorPiBridgeContractText();
 		expect(text).toContain("Pi bridge contract:");
-		expect(text).toContain("pi__* names are live Cursor MCP bridge tool names");
-		expect(text).toContain("prefer pi__mcp for MCP work and pi__subagent for delegation");
-		expect(text).toContain("only when the matching pi__ tool is not exposed or unavailable");
+		expect(text).toContain("Exposed tools are live host tools available for this run.");
+		expect(text).toContain("Call tools directly by their declared name.");
+		expect(text).toContain("Calls execute through normal pi tool flow");
 	});
 
 	it("uses a one-line MCP description pointer instead of repeating the full contract", () => {
@@ -20,7 +20,7 @@ describe("cursor bridge contract", () => {
 			mcpToolName: "pi__cursor_ask_question",
 		});
 		expect(description).toContain("Ask the user a question.");
-		expect(description).toContain("Call MCP name pi__cursor_ask_question (pi tool: cursor_ask_question)");
+		expect(description).toContain("Call tool name pi__cursor_ask_question.");
 		expect(description).toContain("Full tool-surface rules are in the session bootstrap prompt.");
 		expect(description).not.toContain("Pi bridge contract:");
 	});

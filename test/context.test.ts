@@ -64,10 +64,11 @@ describe("buildCursorPrompt", () => {
 			messages: [],
 		};
 		const result = buildCursorPrompt(ctx);
-		expect(result.text).toContain("Pi tool catalog omitted");
+		expect(result.text).not.toContain("Pi tool catalog omitted");
+		expect(result.text).not.toContain("Available tools:");
 		expect(result.text).toContain("Project instruction stays.");
 		expect(result.text).toContain("Current date: 2026-05-20");
-		expect(result.text).not.toContain("custom_private_tool");
+		expect(result.text).toContain("custom_private_tool");
 		expect(result.text).toContain("private-skill");
 		expect(result.text).not.toContain("Semantic code intelligence priority");
 	});
@@ -534,11 +535,9 @@ describe("buildCursorPrompt", () => {
 
 		const planPrompt = buildCursorPrompt(ctx, { agentMode: "plan", includePiBridgeGuidance: false });
 		expect(planPrompt.text).toContain("Cursor SDK mode is plan for this run");
-		expect(planPrompt.text).not.toContain("Exposed pi__* bridge tools");
+		expect(planPrompt.text).not.toContain("Exposed bridge tools are also callable");
 		const incrementalPlanPrompt = buildCursorIncrementalPrompt(ctx, { agentMode: "plan", includePiBridgeGuidance: false });
-		expect(incrementalPlanPrompt.text).toContain("Cursor SDK mode is plan for this run");
-		expect(incrementalPlanPrompt.text).not.toContain("Exposed pi__* bridge tools");
-		expect(incrementalPlanPrompt.text).not.toContain("prefer pi__mcp");
+		expect(incrementalPlanPrompt.text).toBe("User: def add(a, b):");
 	});
 
 	it("keeps pi-bridge framing when context tools are present or unknown", () => {
@@ -551,12 +550,12 @@ describe("buildCursorPrompt", () => {
 		const unknownTools = buildCursorPrompt({ messages: [{ role: "user", content: "test", timestamp: 1 }] });
 
 		expect(withTools.text).toContain("For exposed pi bridge tools");
-		expect(withTools.text).toContain("Use pi__cursor_ask_question");
+		expect(withTools.text).toContain("Use cursor_ask_question");
 		expect(unknownTools.text).toContain("For exposed pi bridge tools");
-		expect(unknownTools.text).toContain("Use pi__cursor_ask_question");
+		expect(unknownTools.text).toContain("Use cursor_ask_question");
 
 		const unknownToolsPlan = buildCursorPrompt({ messages: [{ role: "user", content: "test", timestamp: 1 }] }, { agentMode: "plan" });
-		expect(unknownToolsPlan.text).toContain("Exposed pi__* bridge tools");
+		expect(unknownToolsPlan.text).toContain("Exposed bridge tools are also callable in plan mode");
 	});
 
 	it("instructs Cursor not to claim web search without an actual Cursor web tool", () => {
@@ -567,11 +566,10 @@ describe("buildCursorPrompt", () => {
 		const result = buildCursorPrompt(ctx);
 		expect(result.text.indexOf("Cursor SDK tool boundary:")).toBeLessThan(result.text.indexOf("System instructions from pi:"));
 		expect(result.text).toContain("pi history names, replay labels, and transcript names are not callable");
-		expect(result.text).toContain("call pi__* MCP names");
-		expect(result.text).toContain("not pi card/history names");
+		expect(result.text).toContain("call exposed tool names directly");
 		expect(result.text).toContain("Do not claim pi-side or WebSearch/WebFetch tools");
-		expect(result.text).toContain("Use pi__cursor_ask_question for material choices if exposed");
-		expect(result.text).toContain("prefer pi__mcp for MCP work and pi__subagent for delegation");
+		expect(result.text).toContain("Use cursor_ask_question for material choices if exposed");
+		expect(result.text).toContain("Tools: call available tools directly by their declared name");
 		expect(result.text).not.toContain("Pi bridge contract:");
 		expect(result.text).not.toContain("do not use SwitchMode");
 	});
@@ -599,8 +597,7 @@ describe("buildCursorPrompt", () => {
 		const bootstrap = buildCursorPrompt({ messages: [{ role: "user", content: "test", timestamp: 1 }] });
 		const incremental = buildCursorIncrementalPrompt({ messages: [{ role: "user", content: "test", timestamp: 1 }] });
 		expect(bootstrap.text).toContain("explicit `cd`");
-		expect(incremental.text).toContain("explicit `cd`");
-		expect(incremental.text).toContain("prefer pi__mcp for MCP work and pi__subagent for delegation");
+		expect(incremental.text).toBe("User: test");
 	});
 
 	it("adds plan-mode guidance without disabling inspection tools", () => {
@@ -610,8 +607,8 @@ describe("buildCursorPrompt", () => {
 
 		expect(bootstrap.text.match(/Cursor SDK mode is plan for this run/g)).toHaveLength(1);
 		expect(bootstrap.text).toContain("Safe/read-only shell commands");
-		expect(bootstrap.text).toContain("Exposed pi__* bridge tools are also callable in plan mode");
-		expect(incremental.text.match(/Cursor SDK mode is plan for this run/g)).toHaveLength(1);
+		expect(bootstrap.text).toContain("Exposed bridge tools are also callable in plan mode");
+		expect(incremental.text).toBe("User: test");
 		expect(buildCursorPrompt(context).text).not.toContain("Cursor SDK mode is plan for this run");
 	});
 });
@@ -652,8 +649,7 @@ describe("cursor session prompt assembly", () => {
 		const prompt = buildCursorSessionSendPrompt(context, {}, plan);
 
 		expect(plan.mode).toBe("incremental");
-		expect(prompt.text).toContain("Continue the conversation using Cursor SDK capabilities only");
-		expect(prompt.text).toContain("User: Follow up");
+		expect(prompt.text).toBe("User: Follow up");
 		expect(prompt.text).not.toContain("Cursor SDK tool boundary:");
 		expect(prompt.text).not.toContain("System instructions from pi:");
 		expect(prompt.text).not.toContain("Be helpful.");
@@ -726,11 +722,10 @@ describe("cursor session prompt assembly", () => {
 		expect(incremental.text).not.toContain("Cursor SDK tool boundary:");
 		expect(incremental.text).not.toContain("System instructions from pi:");
 		expect(incremental.text).not.toContain("Be helpful.");
-		expect(incremental.text).toContain("Continue the conversation using Cursor SDK capabilities only");
-		expect(incremental.text).toContain(getCursorToolTailGuardText());
+		expect(incremental.text).toBe("User: Follow up");
 	});
 
-	it("ends bootstrap and incremental prompts with the tool tail guard", () => {
+	it("ends bootstrap prompts with the tool tail guard and keeps incremental prompts clean", () => {
 		const context: Context = {
 			systemPrompt: "Be helpful.",
 			messages: [{ role: "user", content: "Follow up", timestamp: 3 }],
@@ -740,10 +735,10 @@ describe("cursor session prompt assembly", () => {
 		const tail = getCursorToolTailGuardText();
 
 		expect(bootstrap.text.endsWith(tail)).toBe(true);
-		expect(incremental.text.endsWith(tail)).toBe(true);
+		expect(incremental.text).toBe("User: Follow up");
 	});
 
-	it("preserves the latest user request and tail guard in incremental prompts under budget pressure", () => {
+	it("preserves the latest user request in incremental prompts under budget pressure", () => {
 		const incremental = buildCursorIncrementalPrompt(
 			{
 				systemPrompt: "Long pi system prompt. ".repeat(20),
@@ -753,8 +748,7 @@ describe("cursor session prompt assembly", () => {
 		);
 
 		expect(incremental.text).not.toContain("Long pi system prompt.");
-		expect(incremental.text).toContain("User: Keep this exact follow-up request");
-		expect(incremental.text).toContain(getCursorToolTailGuardText());
+		expect(incremental.text).toBe("User: Keep this exact follow-up request");
 	});
 
 	it("includes branch summaries from /tree navigation in bootstrap prompts", () => {

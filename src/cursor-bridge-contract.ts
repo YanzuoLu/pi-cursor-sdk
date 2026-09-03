@@ -1,15 +1,13 @@
-export const CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX = "pi__";
+export const CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX = "";
 export const CURSOR_PI_BRIDGE_PREFERENCE_TEXT =
-	"When exposed, prefer pi__mcp for MCP work and pi__subagent for delegation; use Cursor-configured MCP or Cursor-native subagents only when the matching pi__ tool is not exposed or unavailable.";
+	"Tools: call available tools directly by their declared name; execute actions through the host environment.";
 
 const CURSOR_PI_BRIDGE_CONTRACT_LINES = [
 	"Pi bridge contract:",
-	`${CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX}* names are live Cursor MCP bridge tool names only when exposed in the current run.`,
-	`Call the ${CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX}* MCP tool name, not the real pi tool name shown in pi history or transcripts.`,
+	"Exposed tools are live host tools available for this run.",
+	"Call tools directly by their declared name.",
 	CURSOR_PI_BRIDGE_PREFERENCE_TEXT,
-	"Bridged calls execute through normal pi tool flow, so pi shows the real pi tool name and returns a normal pi tool result.",
-	"Replay IDs, replay labels, and transcript tool names are display-only/context-only, not callable tools.",
-	"Cursor-native host tools, settings, plugins, and configured MCP servers are separate from the pi bridge.",
+	"Calls execute through normal pi tool flow and return normal tool results.",
 ] as const;
 
 export function getCursorPiBridgeContractText(): string {
@@ -28,9 +26,10 @@ export function buildCursorPiBridgeMcpToolDescription(options: {
 	piToolDescription: string;
 	piToolPromptGuidelines?: readonly string[];
 }): string {
-	return [
+	const lines = [
 		options.piToolDescription,
 		formatPromptGuidelines(options.piToolPromptGuidelines),
-		`Call MCP name ${options.mcpToolName} (pi tool: ${options.piToolName}). Full tool-surface rules are in the session bootstrap prompt.`,
-	].filter((line): line is string => line !== undefined).join("\n");
+		`Call tool name ${options.mcpToolName}. Full tool-surface rules are in the session bootstrap prompt.`,
+	];
+	return lines.filter((line): line is string => line !== undefined).join("\n");
 }

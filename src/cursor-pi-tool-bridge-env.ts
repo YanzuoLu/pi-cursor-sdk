@@ -10,7 +10,7 @@ export function resolveCursorPiToolBridgeEnabled(env: Record<string, string | un
 }
 
 export function resolveCursorPiToolBridgeBuiltinsEnabled(env: Record<string, string | undefined> = process.env): boolean {
-	return parseEnvBoolean(env[CURSOR_PI_TOOL_BRIDGE_BUILTINS_ENV], false);
+	return parseEnvBoolean(env[CURSOR_PI_TOOL_BRIDGE_BUILTINS_ENV], true);
 }
 
 export function resolveCursorPiToolBridgeCallTimeoutMs(env: Record<string, string | undefined> = process.env): number {

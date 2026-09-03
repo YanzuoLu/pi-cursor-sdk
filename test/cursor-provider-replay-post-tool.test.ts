@@ -630,7 +630,7 @@ it("streams post-tool Cursor thinking and text while a native replay run is stil
 		const { client, transport } = await connectMcpClient(getPiToolsMcpUrlFromAgentCreateOptions(createOptions));
 		try {
 			onDelta?.({ update: { type: "text-delta", text: "Disconnect" } });
-			const readCallPromise = client.callTool({ name: "pi__read", arguments: { path: "README.md" } });
+			const readCallPromise = client.callTool({ name: "read", arguments: { path: "README.md" } });
 			const firstEvents = await firstEventsPromise;
 			const firstText = collectTextDeltas(firstEvents);
 			const firstDone = getDoneEvent(firstEvents);

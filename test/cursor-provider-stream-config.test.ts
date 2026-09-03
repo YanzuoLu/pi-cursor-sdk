@@ -540,8 +540,8 @@ describe("streamCursor prompt and model config", () => {
 		expect(sentMessage.text).toContain("For exposed pi bridge tools");
 		expect(sentMessage.text).not.toContain("Use pi__cursor_ask_question");
 		expect(sentMessage.text).toContain("Pi bridge: call exposed pi__* MCP names");
-		expect(sentMessage.text).toContain("prefer pi__mcp for MCP work and pi__subagent for delegation");
-		expect(sentMessage.text).toContain("pi__sem_reindex");
+		expect(sentMessage.text).toContain("Tools: call available tools directly by their declared name");
+		expect(sentMessage.text).toContain("sem_reindex");
 	});
 
 	it("forwards latest user images to Cursor Agent.send", async () => {

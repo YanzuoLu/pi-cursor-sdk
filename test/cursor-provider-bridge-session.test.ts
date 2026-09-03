@@ -158,10 +158,9 @@ describe("streamCursor session agent", () => {
 		const secondPrompt = mockSend.mock.calls[1]?.[0] as { text?: string };
 		expect(firstPrompt.text).toContain("Cursor SDK tool boundary:");
 		expect(firstPrompt.text).toContain("User: Hello");
-		expect(firstPrompt.text).toContain("prefer pi__mcp for MCP work and pi__subagent for delegation");
+		expect(firstPrompt.text).toContain("Tools: call available tools directly by their declared name");
 		expect(secondPrompt.text).toContain("User: Follow up");
 		expect(secondPrompt.text).not.toContain("User: Hello");
-		expect(secondPrompt.text).toContain("prefer pi__mcp for MCP work and pi__subagent for delegation");
 	});
 
 	it("recreates the session agent after session-tree invalidation", async () => {
@@ -387,8 +386,8 @@ describe("streamCursor session agent", () => {
 		const createOptions = getCreatedAgentOptions();
 		const { client, transport } = await connectMcpClient(getPiToolsMcpUrlFromAgentCreateOptions(createOptions));
 		try {
-			const readCallPromise = client.callTool({ name: "pi__read", arguments: { path: "README.md" } });
-			turn2OnDelta?.({ update: { type: "tool-call-started", callId: "mcp-read", toolCall: { name: "mcp", args: { toolName: "pi__read" } } } });
+			const readCallPromise = client.callTool({ name: "read", arguments: { path: "README.md" } });
+			turn2OnDelta?.({ update: { type: "tool-call-started", callId: "mcp-read", toolCall: { name: "mcp", args: { toolName: "read" } } } });
 
 			const secondEvents = await secondEventsPromise;
 			const secondDone = getDoneEvent(secondEvents);

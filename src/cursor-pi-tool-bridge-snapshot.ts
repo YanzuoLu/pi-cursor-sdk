@@ -59,7 +59,7 @@ export function buildCursorPiToolBridgeSnapshot(
 	const piToolNameToMcpToolName = new Map<string, string>();
 	const tools: CursorPiBridgeToolDefinition[] = [];
 
-	const exposeOverlappingBuiltins = options.exposeOverlappingBuiltins === true;
+	const exposeOverlappingBuiltins = options.exposeOverlappingBuiltins ?? true;
 
 	for (const tool of allTools) {
 		if (!activeToolNames.has(tool.name)) continue;

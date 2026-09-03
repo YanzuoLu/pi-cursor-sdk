@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { AgentModeOption, LocalAgentOptions, LocalAgentStore, ModelSelection, SDKAgent, SettingSource } from "@cursor/sdk";
+import type { AgentModeOption, LocalAgentOptions, LocalAgentStore, ModelSelection, SDKAgent, SettingSource, ToolName } from "@cursor/sdk";
 import type { Context } from "@earendil-works/pi-ai";
 import {
 	getRegisteredCursorPiToolBridge,
@@ -125,6 +125,7 @@ interface SessionCursorAgentCreateParams {
 	agentMode: AgentModeOption;
 	cwd: string;
 	modelSelection: ModelSelection;
+	tools?: readonly ToolName[];
 	settingSources?: SettingSource[];
 	localSafety?: CursorLocalSafetyOptions;
 	useHttp1ForAgent?: boolean;
@@ -211,6 +212,12 @@ function buildBridgePoolKeySuffix(): string {
 	return registeredBridge.getToolSurfaceSignature();
 }
 
+export const DEFAULT_CURSOR_AGENT_TOOLS: readonly ToolName[] = ["mcp"];
+
+export function buildToolsPoolKey(tools: readonly ToolName[] = DEFAULT_CURSOR_AGENT_TOOLS): string {
+	return `tools:${[...tools].sort().join(",")}`;
+}
+
 function buildSessionAgentPoolKey(scopeKey: string, params: SessionCursorAgentCreateParams): string {
 	return [
 		scopeKey,
@@ -218,6 +225,7 @@ function buildSessionAgentPoolKey(scopeKey: string, params: SessionCursorAgentCr
 		buildModelPoolKey(params.modelSelection),
 		buildSettingSourcesPoolKey(params.settingSources),
 		buildLocalSafetyPoolKey(params.localSafety),
+		buildToolsPoolKey(params.tools),
 		params.useHttp1ForAgent === undefined
 			? "http1:default"
 			: params.useHttp1ForAgent
@@ -478,10 +486,12 @@ async function createSessionAgentEntry(
 		const { identities } = storeSelection;
 		const resumeAttemptAllowed = storeSelection.resumeAttemptAllowed;
 		let resumeNotice = storeSelection.resumeFallback ? LOCAL_RESUME_FALLBACK_NOTICE : undefined;
+		const agentTools = params.tools ?? DEFAULT_CURSOR_AGENT_TOOLS;
 		const buildAgentOptions = () => ({
 			apiKey: params.apiKey,
 			model: params.modelSelection,
 			mode: params.agentMode,
+			tools: [...agentTools],
 			local: buildCursorLocalAgentOptions({
 				cwd: params.cwd,
 				settingSources: params.settingSources,

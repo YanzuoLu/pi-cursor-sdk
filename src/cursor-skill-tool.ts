@@ -14,9 +14,10 @@ import { isCursorModel } from "./cursor-model.js";
 import { registerCursorModelLifecycle, type CursorModelLifecycleExtensionApi } from "./cursor-model-lifecycle.js";
 import { resolveCursorPiToolBridgeEnabled } from "./cursor-pi-tool-bridge-env.js";
 import { resolveEffectiveCursorConfigForContext } from "./cursor-runtime-state.js";
+import { CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX } from "./cursor-bridge-contract.js";
 
 export const CURSOR_ACTIVATE_SKILL_TOOL_NAME = "cursor_activate_skill";
-export const CURSOR_ACTIVATE_SKILL_MCP_NAME = "pi__cursor_activate_skill";
+export const CURSOR_ACTIVATE_SKILL_MCP_NAME = `${CURSOR_PI_BRIDGE_MCP_TOOL_PREFIX}cursor_activate_skill`;
 
 const AVAILABLE_SKILLS_SECTION_PATTERN = /\n\nThe following skills provide specialized instructions for specific tasks\.[\s\S]*?<\/available_skills>/;
 const MAX_SKILL_RESOURCES = 80;
