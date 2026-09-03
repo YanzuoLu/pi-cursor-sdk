@@ -189,10 +189,9 @@ describe("extension registration and discovery", () => {
 			"cursor-refresh-config",
 			expect.objectContaining({ description: expect.stringContaining("Refresh filesystem Cursor config") }),
 		);
-		expect(pi.registerTool).toHaveBeenCalledTimes(10);
+		expect(pi.registerTool).toHaveBeenCalledTimes(9);
 		expect(pi._tools.map((tool) => tool.name)).toEqual([
 			CURSOR_ASK_QUESTION_TOOL_NAME,
-			CURSOR_ACTIVATE_SKILL_TOOL_NAME,
 			"grep",
 			"find",
 			"ls",
@@ -203,7 +202,6 @@ describe("extension registration and discovery", () => {
 			"write",
 		]);
 		expect(pi._tools.find((tool) => tool.name === CURSOR_ASK_QUESTION_TOOL_NAME)?.promptSnippet).toContain("clarifying question");
-		expect(pi._tools.find((tool) => tool.name === CURSOR_ACTIVATE_SKILL_TOOL_NAME)?.promptSnippet).toContain("Agent Skill");
 		const replayTool = pi._tools.find((tool) => tool.name === "cursor");
 		expect(replayTool?.promptSnippet).toBeUndefined();
 		expect(replayTool?.promptGuidelines).toBeUndefined();
@@ -307,7 +305,7 @@ describe("extension registration and discovery", () => {
 		await extensionFactory(pi);
 		await pi.runSessionStart({ model: undefined });
 
-		expect(pi._tools.map((tool) => tool.name)).toEqual([CURSOR_ASK_QUESTION_TOOL_NAME, CURSOR_ACTIVATE_SKILL_TOOL_NAME]);
+		expect(pi._tools.map((tool) => tool.name)).toEqual([CURSOR_ASK_QUESTION_TOOL_NAME]);
 		expect(pi._activeToolNames()).not.toContain("cursor");
 		expect(pi._activeToolNames()).not.toContain("grep");
 		expect(pi._activeToolNames()).not.toContain(CURSOR_ASK_QUESTION_TOOL_NAME);
@@ -372,7 +370,7 @@ describe("extension registration and discovery", () => {
 		await pi.runBeforeAgentStart({ mode: "print", hasUI: false, model: makeModel("composer-2.5") });
 		await pi.runTurnStart({ mode: "print", hasUI: false, model: makeModel("composer-2.5") });
 
-		expect(pi._tools.map((tool) => tool.name)).toEqual([CURSOR_ASK_QUESTION_TOOL_NAME, CURSOR_ACTIVATE_SKILL_TOOL_NAME]);
+		expect(pi._tools.map((tool) => tool.name)).toEqual([CURSOR_ASK_QUESTION_TOOL_NAME]);
 		expect(pi._activeToolNames()).toContain(CURSOR_ASK_QUESTION_TOOL_NAME);
 		expect(pi._activeToolNames()).not.toContain("cursor");
 		expect(pi._activeToolNames()).not.toContain("grep");

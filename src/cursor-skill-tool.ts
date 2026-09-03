@@ -190,80 +190,8 @@ function wrapSkillContent(skill: Skill, content: string, resources: readonly str
 	].join("\n");
 }
 
-export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
-	pi.registerTool({
-		name: CURSOR_ACTIVATE_SKILL_TOOL_NAME,
-		label: "Cursor skill",
-		description: "Load full pi Agent Skill instructions for Cursor. Use with a skill name from the current <available_skills> catalog before applying that skill.",
-		promptSnippet: "Load full pi Agent Skill instructions for a listed skill before Cursor applies that skill",
-		parameters: Type.Object({
-			name: Type.String({ description: "Skill name from the current <available_skills> catalog" }),
-		}),
-		promptGuidelines: [
-			`Use ${CURSOR_ACTIVATE_SKILL_TOOL_NAME} only for skill names listed in the current <available_skills> catalog.`,
-			"After loading a skill, follow its instructions and resolve relative skill paths against the returned skill directory.",
-		],
-		async execute(_toolCallId, params) {
-			const requestedName = (params as CursorActivateSkillParams).name?.trim();
-			if (!requestedName) {
-				throw new Error("No skill name was provided.");
-			}
-			const skill = currentSkillsByName.get(requestedName);
-			if (!skill) {
-				throw new Error(
-					`Skill not available: ${requestedName}. Available skills: ${getAvailableSkillNames().join(", ") || "none"}.`,
-				);
-			}
-
-			try {
-				const [content, resources] = await Promise.all([
-					readFile(skill.filePath, "utf8"),
-					listSkillResourcePaths(dirname(skill.filePath)),
-				]);
-				return {
-					content: [{ type: "text" as const, text: wrapSkillContent(skill, content, resources) }],
-					details: buildActivationDetails(skill, resources),
-				};
-			} catch (error) {
-				throw new Error(
-					`Failed to load skill ${requestedName} from ${skill.filePath}: ${error instanceof Error ? error.message : String(error)}`,
-				);
-			}
-		},
-	});
-
-	const clearSkillsAndSync = (model: ExtensionContext["model"], runtime: CursorRuntime = "local"): void => {
-		setCurrentSkills([]);
-		syncCursorSkillToolForModel(pi, model, runtime);
-	};
-
-	registerCursorModelLifecycle(pi, {
-		sessionStart: (_event, ctx) => {
-			clearSkillsAndSync(ctx.model);
-		},
-		modelSelect: (event) => {
-			clearSkillsAndSync(event.model);
-		},
-		turnStart: (_event, ctx) => {
-			const cursorModel = isCursorModel(ctx.model);
-			const runtime = resolveEffectiveRuntimeForSkillLifecycle(cursorModel, ctx);
-			if (!cursorModel || runtime === "cloud") setCurrentSkills([]);
-			syncCursorSkillToolForModel(pi, ctx.model, runtime);
-		},
-		beforeAgentStart: (event, ctx) => {
-			const cursorModel = isCursorModel(ctx.model);
-			const runtime = resolveEffectiveRuntimeForSkillLifecycle(cursorModel, ctx);
-			if (cursorModel && runtime === "local") {
-				setCurrentSkills(event.systemPromptOptions?.skills);
-			} else {
-				setCurrentSkills([]);
-			}
-			syncCursorSkillToolForModel(pi, ctx.model, runtime);
-			const resolved = resolveCursorSkillSystemPrompt(event.systemPrompt, ctx.model, event.systemPromptOptions, runtime);
-			if (resolved === event.systemPrompt) return undefined;
-			return { systemPrompt: resolved };
-		},
-	});
+export function registerCursorSkillTool(_pi: unknown): void {
+	// No-op: Skills are handled natively by pi's read tool without custom wrappers.
 }
 
 export const __testUtils = {

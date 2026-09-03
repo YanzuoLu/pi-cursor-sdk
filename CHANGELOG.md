@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.6-fork.2 - 2026-09-03
+
+### Removed
+
+- Strip `cursor_activate_skill` tool and prompt rewrites, letting pi's native `read` tool handle Agent Skills directly without extra layers.
+
 ## 0.3.6-fork.1 - 2026-09-03
 
 ### Fixed
