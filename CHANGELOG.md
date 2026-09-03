@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.6-fork.1 - 2026-09-03
+
+### Fixed
+
+- Self-heal invalid or stale `CURSOR_RIPGREP_PATH` entries in `ensureCursorRipgrepPath`, falling back to bundled package ripgrep instead of crashing with spawn ENOENT.
+
+### Changed
+
+- Purge Cursor SDK native built-in tools (`tools: ["mcp"]`) and strip the `pi__` tool prefix so host tools execute directly under their native names.
+- Sanitize prompt wrapping: remove system prompt tool catalog omission warnings and keep pure user instructions in incremental follow-up turns.
+
 ## 0.3.6 - 2026-08-18
 
 ### Fixed

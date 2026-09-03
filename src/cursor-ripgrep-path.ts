@@ -24,7 +24,14 @@ export function resolveBundledCursorRipgrepPath(
 
 export function ensureCursorRipgrepPath(): string | undefined {
 	const configuredPath = process.env[RIPGREP_ENV];
-	if (configuredPath && isAbsolute(configuredPath)) return configuredPath;
+	if (configuredPath && isAbsolute(configuredPath)) {
+		try {
+			accessSync(configuredPath, constants.X_OK);
+			return configuredPath;
+		} catch {
+			delete process.env[RIPGREP_ENV];
+		}
+	}
 
 	const bundledPath = resolveBundledCursorRipgrepPath();
 	if (bundledPath) process.env[RIPGREP_ENV] = bundledPath;

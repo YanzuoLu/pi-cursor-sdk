@@ -90,13 +90,20 @@ describe("Cursor ripgrep path", () => {
 		expect(bundle).toContain("Ripgrep path not configured. Call configureRipgrepPath() at startup.");
 	});
 
-	it("configures an empty path without overriding an existing absolute value", () => {
+	it("configures an empty path without overriding an existing absolute valid executable", () => {
 		process.env.CURSOR_RIPGREP_PATH = "";
 		const bundledPath = ensureCursorRipgrepPath();
 		expect(process.env.CURSOR_RIPGREP_PATH).toBe(bundledPath);
 
-		process.env.CURSOR_RIPGREP_PATH = "/custom/rg";
-		expect(ensureCursorRipgrepPath()).toBe("/custom/rg");
-		expect(process.env.CURSOR_RIPGREP_PATH).toBe("/custom/rg");
+		process.env.CURSOR_RIPGREP_PATH = process.execPath;
+		expect(ensureCursorRipgrepPath()).toBe(process.execPath);
+		expect(process.env.CURSOR_RIPGREP_PATH).toBe(process.execPath);
+	});
+
+	it("falls back to bundled path when configured path does not exist", () => {
+		process.env.CURSOR_RIPGREP_PATH = "/nonexistent/path/to/rg";
+		const resolved = ensureCursorRipgrepPath();
+		expect(resolved).not.toBe("/nonexistent/path/to/rg");
+		expect(process.env.CURSOR_RIPGREP_PATH).toBe(resolved);
 	});
 });
