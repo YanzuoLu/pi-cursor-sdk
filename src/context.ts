@@ -328,7 +328,10 @@ export function buildCursorPrompt(context: Context, options: CursorPromptOptions
 	const sections: string[] = [];
 
 	if (context.systemPrompt) {
-		sections.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
+		const sanitized = sanitizeSystemPromptForCursor(context.systemPrompt);
+		if (sanitized) {
+			sections.push(sanitized);
+		}
 	}
 
 	const messages = normalizePiContextMessages(context.messages);

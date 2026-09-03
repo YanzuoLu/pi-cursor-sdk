@@ -104,7 +104,7 @@ describe("cursor-session-send-policy", () => {
 		});
 
 		expect(bootstrapPrompt.text).not.toContain("Cursor SDK tool boundary:");
-		expect(bootstrapPrompt.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: Follow up");
+		expect(bootstrapPrompt.text).toBe("Be helpful.\n\nUser: Follow up");
 		expect(incrementalPrompt.text).not.toContain("Cursor SDK tool boundary:");
 		expect(incrementalPrompt.text).toBe("User: Follow up");
 	});

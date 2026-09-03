@@ -23,8 +23,7 @@ describe("buildCursorPrompt", () => {
 			messages: [],
 		};
 		const result = buildCursorPrompt(ctx);
-		expect(result.text).toContain("System instructions from pi:");
-		expect(result.text).toContain("You are helpful.");
+		expect(result.text).toBe("You are helpful.");
 	});
 
 	it("omits pi tool catalogs while preserving local skill catalogs for Cursor-facing system instructions", () => {
@@ -459,7 +458,7 @@ describe("buildCursorPrompt", () => {
 		const result = buildCursorPrompt(ctx, { toolManifest: manifest });
 		expect(result.text).not.toContain(manifest);
 		expect(result.text).not.toContain("Cursor SDK tool boundary:");
-		expect(result.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: test");
+		expect(result.text).toBe("Be helpful.\n\nUser: test");
 	});
 
 	it("omits tool manifest by default", () => {
@@ -506,7 +505,7 @@ describe("buildCursorPrompt", () => {
 		const result = buildCursorPrompt(ctx);
 		expect(result.text).not.toContain("Cursor SDK tool boundary:");
 		expect(result.text).not.toContain("pi history names, replay labels, and transcript names are not callable");
-		expect(result.text).toBe("System instructions from pi:\nYou can use WebSearch and WebFetch.\n\nUser: search the web for Cursor SDK best practices");
+		expect(result.text).toBe("You can use WebSearch and WebFetch.\n\nUser: search the web for Cursor SDK best practices");
 	});
 
 	it("omits manifest pointer from boundary when tool manifest is disabled", () => {
@@ -558,7 +557,7 @@ describe("cursor session prompt assembly", () => {
 
 		expect(plan.mode).toBe("bootstrap");
 		expect(prompt.text).not.toContain("Cursor SDK tool boundary:");
-		expect(prompt.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: Hello");
+		expect(prompt.text).toBe("Be helpful.\n\nUser: Hello");
 	});
 
 	it("sends an incremental prompt after a bootstrapped session agent send", () => {
@@ -643,7 +642,7 @@ describe("cursor session prompt assembly", () => {
 		const prompt = buildCursorSessionSendPrompt(context, {}, plan);
 
 		expect(plan).toMatchObject({ mode: "bootstrap", reason: "context_divergence" });
-		expect(prompt.text).toContain("System instructions from pi:\nCurrent invariant instruction.");
+		expect(prompt.text).toContain("Current invariant instruction.");
 		expect(prompt.text).not.toContain("Previous invariant instruction.");
 	});
 
@@ -667,7 +666,7 @@ describe("cursor session prompt assembly", () => {
 		const incremental = buildCursorIncrementalPrompt(context);
 
 		expect(bootstrap.text).not.toContain("Answer the latest user request");
-		expect(bootstrap.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: Follow up");
+		expect(bootstrap.text).toBe("Be helpful.\n\nUser: Follow up");
 		expect(incremental.text).toBe("User: Follow up");
 	});
 

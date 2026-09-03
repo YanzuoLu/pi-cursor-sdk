@@ -243,7 +243,7 @@ describe("cursor usage accounting", () => {
 			{ type: "thinking", thinking: "Need a concise answer." },
 			{ type: "text", text: "Hello back." },
 		]);
-		const sessionInputTokens = 7;
+		const sessionInputTokens = 2;
 
 		applyCursorApproximateUsage(partial, model, context, sessionInputTokens);
 

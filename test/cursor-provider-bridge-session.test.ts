@@ -442,6 +442,6 @@ describe("streamCursor session agent", () => {
 		const firstPrompt = mockSend.mock.calls[0]?.[0] as { text?: string };
 		expect(firstPrompt.text).not.toContain("Callable tool surfaces this run:");
 		expect(firstPrompt.text).not.toContain("Cursor host/MCP");
-		expect(firstPrompt.text).toBe("System instructions from pi:\nBe helpful.\n\nUser: Hello");
+		expect(firstPrompt.text).toBe("Be helpful.\n\nUser: Hello");
 	});
 });
