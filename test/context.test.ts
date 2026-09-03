@@ -297,11 +297,11 @@ describe("buildCursorPrompt", () => {
 		} satisfies ToolResultMessage;
 
 		expect(estimateCursorPromptMessageTokens(toolResult, { charsPerToken: 1 })).toBe(
-			"Tool result (read_image, call tc1): [image omitted from transcript]".length,
+			"Tool result (read_image, call tc1): [image]".length,
 		);
 	});
 
-	it("estimates context tokens from the budgeted Cursor prompt and latest user image reserve", () => {
+	it("estimates context tokens from the Cursor prompt and image reserve", () => {
 		const ctx: Context = {
 			messages: [
 				{ role: "user", content: `old ${"x".repeat(200)}`, timestamp: 1 } satisfies UserMessage,
@@ -315,10 +315,10 @@ describe("buildCursorPrompt", () => {
 				} satisfies UserMessage,
 			],
 		};
-		const options = { maxInputTokens: 80, charsPerToken: 1, imageTokenEstimate: CURSOR_IMAGE_TOKEN_ESTIMATE };
+		const options = { charsPerToken: 1, imageTokenEstimate: CURSOR_IMAGE_TOKEN_ESTIMATE };
 		const prompt = buildCursorPrompt(ctx, options);
 
-		expect(prompt.text).not.toContain("old ");
+		expect(prompt.text).toContain("old ");
 		expect(prompt.images).toHaveLength(1);
 		expect(estimateCursorContextTokens(ctx, options)).toBe(prompt.text.length + CURSOR_IMAGE_TOKEN_ESTIMATE);
 	});
@@ -355,7 +355,7 @@ describe("buildCursorPrompt", () => {
 		expect(result.text).toContain("Tool result (bash, call tc1): README.md");
 	});
 
-	it("extracts images from latest user message only", () => {
+	it("extracts all images across user messages", () => {
 		const ctx: Context = {
 			messages: [
 				{
@@ -377,8 +377,9 @@ describe("buildCursorPrompt", () => {
 			],
 		};
 		const result = buildCursorPrompt(ctx);
-		expect(result.images).toHaveLength(1);
-		expect(result.images[0]).toEqual({ data: "newbase64", mimeType: "image/jpeg" });
+		expect(result.images).toHaveLength(2);
+		expect(result.images[0]).toEqual({ data: "oldbase64", mimeType: "image/png" });
+		expect(result.images[1]).toEqual({ data: "newbase64", mimeType: "image/jpeg" });
 	});
 
 	it("keeps tool boundary and manifest separate from pure bootstrap prompt", () => {
@@ -387,7 +388,7 @@ describe("buildCursorPrompt", () => {
 		expect(result.text).toBe("User: test");
 	});
 
-	it("replaces historical images with placeholder text", () => {
+	it("replaces historical images with placeholder text while retaining image payload", () => {
 		const ctx: Context = {
 			messages: [
 				{
@@ -406,11 +407,12 @@ describe("buildCursorPrompt", () => {
 			],
 		};
 		const result = buildCursorPrompt(ctx);
-		expect(result.text).toContain("[image omitted from transcript]");
-		expect(result.images).toHaveLength(0);
+		expect(result.text).toContain("[image]");
+		expect(result.images).toHaveLength(1);
+		expect(result.images[0]).toEqual({ data: "abc", mimeType: "image/png" });
 	});
 
-	it("budgets transcript history while preserving system prompt and latest user request", () => {
+	it("preserves full transcript history without provider-side truncation", () => {
 		const ctx: Context = {
 			systemPrompt: "Always preserve this system instruction.",
 			messages: [
@@ -429,62 +431,13 @@ describe("buildCursorPrompt", () => {
 			],
 		};
 
-		const result = buildCursorPrompt(ctx, { maxInputTokens: 120, charsPerToken: 1 });
+		const result = buildCursorPrompt(ctx);
 
 		expect(result.text).toContain("Always preserve this system instruction.");
 		expect(result.text).toContain("User: latest request must stay");
-		expect(result.text).toContain("[Earlier transcript omitted: 2 messages to fit Cursor context budget]");
-		expect(result.text).not.toContain("old request");
-		expect(result.text).not.toContain("old answer");
-	});
-
-	it("keeps recent transcript messages that fit the budget", () => {
-		const ctx: Context = {
-			messages: [
-				{ role: "user", content: `old request ${"x".repeat(3000)}`, timestamp: 1 } satisfies UserMessage,
-				{ role: "user", content: "recent request", timestamp: 2 } satisfies UserMessage,
-				{
-					role: "toolResult",
-					toolCallId: "tc1",
-					toolName: "bash",
-					content: [{ type: "text", text: "recent tool output" }],
-					isError: false,
-					timestamp: 3,
-				} satisfies ToolResultMessage,
-				{ role: "user", content: "latest request", timestamp: 4 } satisfies UserMessage,
-			],
-		};
-
-		const result = buildCursorPrompt(ctx, { maxInputTokens: 2200, charsPerToken: 1 });
-
-		expect(result.text).toContain("User: latest request");
-		expect(result.text).toContain("User: recent request");
-		expect(result.text).toContain("Tool result (bash, call tc1): recent tool output");
-		expect(result.text).not.toContain("old request");
-	});
-
-	it("omits oversized old tool results before older text that still fits", () => {
-		const ctx: Context = {
-			messages: [
-				{
-					role: "toolResult",
-					toolCallId: "tc1",
-					toolName: "bash",
-					content: [{ type: "text", text: `large output ${"z".repeat(1200)}` }],
-					isError: false,
-					timestamp: 1,
-				} satisfies ToolResultMessage,
-				{ role: "user", content: "recent request", timestamp: 2 } satisfies UserMessage,
-				{ role: "user", content: "latest request", timestamp: 3 } satisfies UserMessage,
-			],
-		};
-
-		const result = buildCursorPrompt(ctx, { maxInputTokens: 800, charsPerToken: 1 });
-
-		expect(result.text).toContain("User: latest request");
-		expect(result.text).toContain("User: recent request");
-		expect(result.text).toContain("[Earlier transcript omitted: 1 message to fit Cursor context budget]");
-		expect(result.text).not.toContain("large output");
+		expect(result.text).not.toContain("Earlier transcript omitted");
+		expect(result.text).toContain("old request");
+		expect(result.text).toContain("old answer");
 	});
 
 	it("keeps pure bootstrap prompt without answer instruction or tool tail guard", () => {

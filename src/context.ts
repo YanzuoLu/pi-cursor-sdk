@@ -100,22 +100,17 @@ function isToolCallBlock(block: { type: string }): block is ToolCall {
 	return block.type === "toolCall";
 }
 
-function extractLatestImages(messages: Message[]): SDKImage[] {
-	// Find the last user message and extract images only from it
-	for (let i = messages.length - 1; i >= 0; i--) {
-		const msg = messages[i];
-		if (msg.role !== "user") continue;
-		if (typeof msg.content === "string") return [];
-
-		const images: SDKImage[] = [];
+function extractAllImages(messages: Message[]): SDKImage[] {
+	const images: SDKImage[] = [];
+	for (const msg of messages) {
+		if (msg.role !== "user" || typeof msg.content === "string") continue;
 		for (const block of msg.content) {
 			if (isImageBlock(block) && block.data && block.mimeType) {
 				images.push({ data: block.data, mimeType: block.mimeType });
 			}
 		}
-		return images;
 	}
-	return [];
+	return images;
 }
 
 function formatContentBlocks(content: string | { type: string; text?: string; data?: string; mimeType?: string }[]): string {
@@ -123,7 +118,7 @@ function formatContentBlocks(content: string | { type: string; text?: string; da
 	return content
 		.map((block) => {
 			if (isTextBlock(block)) return block.text;
-			if (isImageBlock(block)) return "[image omitted from transcript]";
+			if (isImageBlock(block)) return "[image]";
 			return "";
 		})
 		.filter(Boolean)
@@ -179,58 +174,6 @@ function getLatestUserMessageIndex(messages: Message[]): number {
 		if (messages[index].role === "user") return index;
 	}
 	return -1;
-}
-
-function getSectionCost(section: string): number {
-	return section.length + SECTION_SEPARATOR.length;
-}
-
-function applyPromptBudget(
-	sectionsBeforeMessages: string[],
-	messageSections: Array<{ index: number; text: string }>,
-	sectionsAfterMessages: string[],
-	latestUserMessageIndex: number,
-	options: CursorPromptOptions,
-): string[] {
-	const maxInputTokens = options.maxInputTokens;
-	if (maxInputTokens === undefined || !Number.isFinite(maxInputTokens) || maxInputTokens <= 0) {
-		return [...sectionsBeforeMessages, ...messageSections.map((section) => section.text), ...sectionsAfterMessages];
-	}
-
-	const charsPerToken = options.charsPerToken ?? CURSOR_APPROX_CHARS_PER_TOKEN;
-	const maxChars = Math.max(1, Math.floor(maxInputTokens * charsPerToken));
-	const requiredMessageSections = messageSections.filter((section) => section.index === latestUserMessageIndex);
-	const requiredCost = [...sectionsBeforeMessages, ...requiredMessageSections.map((section) => section.text), ...sectionsAfterMessages].reduce(
-		(total, section) => total + getSectionCost(section),
-		0,
-	);
-	let remainingChars = maxChars - requiredCost;
-	const includedMessageIndexes = new Set(requiredMessageSections.map((section) => section.index));
-	let omittedMessageCount = 0;
-
-	for (let index = messageSections.length - 1; index >= 0; index -= 1) {
-		const section = messageSections[index];
-		if (includedMessageIndexes.has(section.index)) continue;
-		const cost = getSectionCost(section.text);
-		if (cost <= remainingChars) {
-			includedMessageIndexes.add(section.index);
-			remainingChars -= cost;
-			continue;
-		}
-		omittedMessageCount += messageSections
-			.slice(0, index + 1)
-			.filter((candidate) => !includedMessageIndexes.has(candidate.index)).length;
-		break;
-	}
-
-	const budgetNotice =
-		omittedMessageCount > 0
-			? [`[Earlier transcript omitted: ${omittedMessageCount} message${omittedMessageCount === 1 ? "" : "s"} to fit Cursor context budget]`]
-			: [];
-	const includedMessages = messageSections
-		.filter((section) => includedMessageIndexes.has(section.index))
-		.map((section) => section.text);
-	return [...sectionsBeforeMessages, ...budgetNotice, ...includedMessages, ...sectionsAfterMessages];
 }
 
 export function estimateCursorTextTokens(text: string, options: Pick<CursorPromptOptions, "charsPerToken"> = {}): number {
@@ -376,53 +319,28 @@ export function buildCursorIncrementalPrompt(context: Context, options: CursorPr
 	const latestUserMessageIndex = getLatestUserMessageIndex(messages);
 	const latestUserMessage = latestUserMessageIndex >= 0 ? messages[latestUserMessageIndex] : undefined;
 	const latestUserText = latestUserMessage ? formatMessage(latestUserMessage) : undefined;
-	const latestUserMessageSections =
-		latestUserText && latestUserMessageIndex >= 0 ? [{ index: latestUserMessageIndex, text: latestUserText }] : [];
-	const images = extractLatestImages(messages);
-	const imageTokenReserve = images.length * (options.imageTokenEstimate ?? 0);
-	const budgetOptions =
-		options.maxInputTokens === undefined
-			? options
-			: { ...options, maxInputTokens: Math.max(1, options.maxInputTokens - imageTokenReserve) };
-	const parts = applyPromptBudget(
-		[],
-		latestUserMessageSections,
-		[],
-		latestUserMessageIndex,
-		budgetOptions,
-	);
-	return { text: parts.join(SECTION_SEPARATOR), images };
+	const text = latestUserText ?? "";
+	const images = extractAllImages(latestUserMessage ? [latestUserMessage] : []);
+	return { text, images };
 }
 
 export function buildCursorPrompt(context: Context, options: CursorPromptOptions = {}): CursorPrompt {
-	const sectionsBeforeMessages: string[] = [];
+	const sections: string[] = [];
 
 	if (context.systemPrompt) {
-		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
+		sections.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
 	}
 
 	const messages = normalizePiContextMessages(context.messages);
-	const messageSections = messages
-		.map((msg, index) => {
-			const text = formatMessage(msg);
-			return text ? { index, text } : undefined;
-		})
-		.filter((section): section is { index: number; text: string } => section !== undefined);
-	const sectionsAfterMessages: string[] = [];
-	const images = extractLatestImages(messages);
-	const imageTokenReserve = images.length * (options.imageTokenEstimate ?? 0);
-	const budgetOptions =
-		options.maxInputTokens === undefined
-			? options
-			: { ...options, maxInputTokens: Math.max(1, options.maxInputTokens - imageTokenReserve) };
-	const parts = applyPromptBudget(
-		sectionsBeforeMessages,
-		messageSections,
-		sectionsAfterMessages,
-		getLatestUserMessageIndex(messages),
-		budgetOptions,
-	);
-	const text = parts.join(SECTION_SEPARATOR);
+	for (const msg of messages) {
+		const text = formatMessage(msg);
+		if (text) {
+			sections.push(text);
+		}
+	}
+
+	const images = extractAllImages(messages);
+	const text = sections.join(SECTION_SEPARATOR);
 
 	return { text, images };
 }

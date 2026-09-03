@@ -425,11 +425,11 @@ describe("streamCursor prompt and model config", () => {
 		const sentMessage = mockSend.mock.calls[0]?.[0] as { text: string };
 		expect(sentMessage.text).toContain("Keep this system prompt.");
 		expect(sentMessage.text).toContain("latest request must remain");
-		expect(sentMessage.text).toContain("Earlier transcript omitted");
-		expect(sentMessage.text).not.toContain("old request");
+		expect(sentMessage.text).not.toContain("Earlier transcript omitted");
+		expect(sentMessage.text).toContain("old request");
 	});
 
-	it("reserves image tokens when budgeting oversized prompt history", async () => {
+	it("preserves images across prompt history", async () => {
 		const mockSend = vi.fn().mockResolvedValue({
 			id: "run-1",
 			agentId: "agent-1",
@@ -464,8 +464,8 @@ describe("streamCursor prompt and model config", () => {
 
 		const sentMessage = mockSend.mock.calls[0]?.[0] as { text: string; images?: unknown[] };
 		expect(sentMessage.text).toContain("latest image request");
-		expect(sentMessage.text).toContain("Earlier transcript omitted");
-		expect(sentMessage.text).not.toContain("old request");
+		expect(sentMessage.text).not.toContain("Earlier transcript omitted");
+		expect(sentMessage.text).toContain("old request");
 		expect(sentMessage.images).toEqual([{ data: "base64-image", mimeType: "image/png" }]);
 	});
 
